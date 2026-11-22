@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bintang AI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+            --bg-color: #050505;
+            --glass-bg: rgba(20, 20, 20, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #ff2a2a;
+            --text-main: #ffffff;
+            --text-sub: #888888;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            /* Efek pendaran merah di background */
+            background-image: radial-gradient(circle at 50% 0%, rgba(255, 42, 42, 0.15) 0%, transparent 60%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .header h1 span {
+            color: var(--accent);
+        }
+
+        .header p {
+            color: var(--text-sub);
+            font-size: 13px;
+            margin-top: 8px;
+            letter-spacing: 1px;
+        }
+
+        /* Kotak Kaca (Glassmorphism) */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Garis aksen tipis di atas kotak */
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.5;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 15px;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        textarea::placeholder {
+            color: #555;
+        }
+
+        .action-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 15px;
+        }
+
+        /* Tombol Bulat dengan SVG */
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .btn-icon:hover, .btn-icon:active {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(255, 42, 42, 0.4);
+            transform: scale(0.95);
+        }
+
+        /* Area Hasil */
+        #result {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-main);
+            min-height: 80px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Bintang<span>AI</span></h1>
+        <p>Auto-Detect Exam Engine</p>
+    </div>
+
+    <div class="glass-panel">
+        <textarea id="soalInput" placeholder="Tempel soal ujian di sini, atau scan otomatis..."></textarea>
+        <div class="action-row">
+            <button class="btn-icon" onclick="tanyaAI()" title="Jawab">
+                <!-- Icon: Send / Zap -->
+                <svg viewBox="0 0 24 24">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-panel">
+        <div id="result" style="color: #888;">Menunggu perintah...</div>
+    </div>
+
+    <script>
+        async function tanyaAI() {
+            const soal = document.getElementById('soalInput').value;
+            const resultDiv = document.getElementById('result');
+            
+            if(!soal.trim()) return;
+
+            resultDiv.innerHTML = '<span class="loading-spinner"></span> <span style="color:#aaa">Menganalisa...</span>';
+
+            const API_KEY = "MASUKIN_API_KEY_LU_DISINI"; 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: "Kamu adalah asisten ujian. Jawab soal ini dengan jawaban yang paling benar secara singkat dan langsung ke intinya: \n\n" + soal }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates.length > 0) {
+                    const jawaban = data.candidates[0].content.parts[0].text;
+                    resultDiv.style.color = "var(--text-main)";
+                    resultDiv.innerHTML = `<strong style="color: var(--accent); display:block; margin-bottom:8px;">JAWABAN:</strong>${jawaban.replace(/\n/g, '<br>')}`;
+                } else {
+                    resultDiv.innerHTML = "Gagal dapet jawaban. Cek API Key lu.";
+                }
+            } catch (error) {
+                resultDiv.innerHTML = "Error koneksi internet atau API.";
+            }
+        }
+    </script>
+</body>
+</html>
